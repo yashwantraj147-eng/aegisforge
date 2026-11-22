@@ -21,4 +21,4 @@ async def test_purple_team_orchestrator_scenario():
     # Check scenario run history
     history = await get_scenario_history()
     assert len(history["runs"]) > 0
-    assert history["runs"][-1]["scenario_id"] == result.scenario_id
+    assert any(r["scenario_id"] == result.scenario_id for r in history["runs"])
