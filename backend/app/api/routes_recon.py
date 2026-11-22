@@ -2,6 +2,8 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, status
 from backend.app.core.safety_guard import SafetyViolationException
 from backend.app.core.ws_manager import ws_manager
+from backend.app.core.database import db
+from backend.app.core.metrics import metrics
 from backend.app.models.schemas import (
     PortScanRequest, ScanResultResponse, ScopeVerificationRequest, ScopeVerificationResponse,
     CVSSCalculationRequest, CVSSCalculationResponse,
@@ -22,6 +24,8 @@ async def scan_target(req: PortScanRequest):
     """Runs a scoped port and service banner discovery scan."""
     try:
         result = await recon_engine.scan_target(req)
+        await db.save_scan(req.target, result.scan_duration_ms, result.open_ports)
+        metrics.record_scan(result.open_ports_count)
         await ws_manager.broadcast_event(
             module="RECON",
             event_type="SCAN_COMPLETED",

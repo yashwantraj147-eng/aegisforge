@@ -5,6 +5,8 @@ from typing import List, Dict, Any
 from fastapi import APIRouter
 
 from backend.app.core.ws_manager import ws_manager
+from backend.app.core.database import db
+from backend.app.core.metrics import metrics
 from backend.app.engines.recon_cvd import recon_engine, cvss_calculator, cvd_report_generator
 from backend.app.engines.net_arena import net_arena_engine
 from backend.app.engines.exploit_studio import exploit_studio_engine
@@ -243,7 +245,11 @@ async def run_purple_team_exercise():
         final_report_summary=summary
     )
 
-    scenario_history.append(result.model_dump())
+    async with _history_lock:
+        scenario_history.append(result.model_dump())
+    await db.save_scenario(result.model_dump())
+    metrics.record_scenario()
+
     await ws_manager.broadcast_event(
         module="ORCHESTRATOR",
         event_type="SCENARIO_COMPLETED",
@@ -255,6 +261,10 @@ async def run_purple_team_exercise():
     return result
 
 @router.get("/history")
-def get_scenario_history():
-    """Returns recent Purple-Team scenario exercise runs."""
-    return {"runs": scenario_history[-10:]}
+async def get_scenario_history():
+    """Returns recent Purple-Team scenario exercise runs from database."""
+    runs = await db.get_scenarios(limit=10)
+    if not runs:
+        async with _history_lock:
+            runs = scenario_history[-10:]
+    return {"runs": runs}

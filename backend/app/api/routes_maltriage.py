@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException, status
 from backend.app.core.config import settings
 from backend.app.core.ws_manager import ws_manager
 from backend.app.core.safety_guard import safety_guard
+from backend.app.core.database import db
+from backend.app.core.metrics import metrics
 from backend.app.engines.mal_triage import malware_triage_engine
 from backend.app.models.schemas import TriageArtifactRequest, MalwareTriageResponse
 
@@ -14,6 +16,8 @@ async def analyze_artifact(req: TriageArtifactRequest):
         if req.content_raw_hex:
             safety_guard.validate_payload_size(req.content_raw_hex, max_bytes=settings.MAX_PAYLOAD_BYTES, field_name="content_raw_hex")
         res = malware_triage_engine.triage_artifact(req)
+        await db.save_triage(req.filename, res.file_type, res.overall_entropy, res.risk_score, res.verdict, len(res.yara_matches))
+        metrics.record_triage()
         severity = "CRITICAL" if res.risk_score >= 8.0 else ("HIGH" if res.risk_score >= 6.0 else "INFO")
         await ws_manager.broadcast_event(
             module="MAL_TRIAGE",

@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException, status
 from backend.app.core.safety_guard import SafetyViolationException
 from backend.app.core.ws_manager import ws_manager
+from backend.app.core.database import db
+from backend.app.core.metrics import metrics
 from backend.app.engines.fuzz_re import fuzz_engine, acl_auditor, binary_auditor
 from backend.app.models.schemas import (
     ProtocolFuzzRequest, ProtocolFuzzResponse,
@@ -15,6 +17,8 @@ async def fuzz_protocol(req: ProtocolFuzzRequest):
     """Executes stateful protocol fuzzing campaign with mutation strategies and crash isolation."""
     try:
         result = await fuzz_engine.run_fuzzing_campaign(req)
+        await db.save_fuzz(req.target_host, result.total_cases_run, result.unique_crashes)
+        metrics.record_fuzz(result.total_cases_run, result.crashes_detected)
         severity = "CRITICAL" if result.crashes_detected > 0 else "INFO"
         await ws_manager.broadcast_event(
             module="FUZZING",

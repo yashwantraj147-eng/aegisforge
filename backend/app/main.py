@@ -2,12 +2,14 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 
 from backend.app.core.config import settings
 from backend.app.core.ws_manager import ws_manager
 from backend.app.core.safety_guard import SafetyViolationException
 from backend.app.core.rate_limiter import RateLimitMiddleware
+from backend.app.core.database import db
+from backend.app.core.metrics import metrics
 from backend.app.core.logger import get_logger
 from backend.app.models.schemas import HealthResponse
 
@@ -22,7 +24,9 @@ from backend.app.api.routes_scenarios import router as scenarios_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Broadcast startup event
+    # Startup: Initialize persistent SQLite DB & broadcast boot event
+    await db.init_db()
+    heartbeat_task = asyncio.create_task(ws_manager.start_heartbeat(30))
     logger.info("AegisForge Cyber Range backend started in %s mode.", settings.MODE.value)
     await ws_manager.broadcast_event(
         module="SYSTEM",
@@ -33,6 +37,7 @@ async def lifespan(app: FastAPI):
     )
     yield
     # Shutdown
+    heartbeat_task.cancel()
     logger.info("AegisForge backend shutting down gracefully.")
     await ws_manager.broadcast_event(
         module="SYSTEM",
@@ -102,6 +107,17 @@ def health_check():
         active_websockets=len(ws_manager.active_connections),
         timestamp=datetime.now(timezone.utc).isoformat()
     )
+
+# Telemetry Metrics Endpoints
+@app.get("/api/v1/metrics", tags=["Telemetry & Metrics"])
+def get_metrics_summary():
+    """Returns JSON operational metrics summary for telemetry dashboards."""
+    return metrics.get_summary()
+
+@app.get("/metrics", response_class=PlainTextResponse, tags=["Telemetry & Metrics"])
+def get_prometheus_metrics():
+    """Returns Prometheus standard exposition text format metrics."""
+    return metrics.get_prometheus_format()
 
 # Include Core Engine Routers
 app.include_router(recon_router, prefix=settings.API_V1_STR)

@@ -69,4 +69,27 @@ class WebSocketManager:
     def get_recent_events(self, limit: int = 50) -> list[dict]:
         return self.event_history[-limit:]
 
+    async def start_heartbeat(self, interval_seconds: int = 30):
+        """Periodically broadcasts keepalive pings to connected sockets and cleans stale connections."""
+        while True:
+            try:
+                await asyncio.sleep(interval_seconds)
+                if self.active_connections:
+                    dead = set()
+                    for conn in list(self.active_connections):
+                        try:
+                            await conn.send_json({
+                                "type": "HEARTBEAT",
+                                "timestamp": datetime.now(timezone.utc).isoformat(),
+                                "active_clients": len(self.active_connections)
+                            })
+                        except Exception:
+                            dead.add(conn)
+                    for d in dead:
+                        self.active_connections.discard(d)
+            except asyncio.CancelledError:
+                break
+            except Exception:
+                pass
+
 ws_manager = WebSocketManager()

@@ -10,6 +10,21 @@ async def test_health_endpoint(async_client):
     assert data["safety_guard_active"] is True
 
 @pytest.mark.asyncio
+async def test_metrics_endpoints(async_client):
+    # JSON metrics summary
+    json_res = await async_client.get("/api/v1/metrics")
+    assert json_res.status_code == 200
+    data = json_res.json()
+    assert "uptime_seconds" in data
+    assert "total_requests" in data
+
+    # Prometheus exposition format
+    prom_res = await async_client.get("/metrics")
+    assert prom_res.status_code == 200
+    assert "aegisforge_uptime_seconds" in prom_res.text
+    assert "aegisforge_requests_total" in prom_res.text
+
+@pytest.mark.asyncio
 async def test_recon_endpoints(async_client):
     # Scope check
     scope_res = await async_client.post("/api/v1/recon/scope", json={"target": "192.168.100.1"})
