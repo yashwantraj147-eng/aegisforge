@@ -69,8 +69,13 @@ class DatabaseManager:
         conn.commit()
 
     def _get_connection(self) -> sqlite3.Connection:
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        conn = sqlite3.connect(str(self.db_path))
+        try:
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
+            conn = sqlite3.connect(str(self.db_path))
+        except (OSError, PermissionError):
+            import tempfile
+            self.db_path = Path(tempfile.gettempdir()) / "aegisforge.db"
+            conn = sqlite3.connect(str(self.db_path))
         conn.row_factory = sqlite3.Row
         if not self._initialized:
             self._sync_create_tables(conn)

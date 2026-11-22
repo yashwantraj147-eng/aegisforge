@@ -54,6 +54,9 @@ ignore = [
 where = ["."]
 include = ["app*"]
 
+[tool.vercel]
+entrypoint = "app.main:app"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
