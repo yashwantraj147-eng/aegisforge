@@ -226,7 +226,7 @@ export const FuzzRePage: React.FC = () => {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px] bg-slate-900 p-2 rounded border border-slate-800">
                         {Object.entries(crash.registers_snapshot).map(([reg, val]) => (
                           <div key={reg}>
-                            <span className="text-slate-500">{reg}:</span> <span className="text-cyan-400 font-semibold">{val}</span>
+                            <span className="text-slate-500">{reg}:</span> <span className="text-cyan-400 font-semibold">{String(val)}</span>
                           </div>
                         ))}
                       </div>
