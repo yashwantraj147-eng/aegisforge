@@ -1,7 +1,7 @@
 import ipaddress
 import re
 import socket
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 from urllib.parse import urlparse
 from backend.app.core.config import settings
 
