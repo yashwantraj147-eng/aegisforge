@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api, MalwareTriageResponse } from '../lib/api';
 import { CodeHexViewer } from '../components/CodeHexViewer';
+import { useToast } from '../components/Toast';
 import {
   Biohazard,
   FileCode,
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 
 export const MalTriagePage: React.FC = () => {
+  const toast = useToast();
   const [selectedFile, setSelectedFile] = useState('sample_eicar.com');
   const [activeTabString, setActiveTabString] = useState<'network' | 'filesystem' | 'apis' | 'commands'>('apis');
   const [searchQuery, setSearchQuery] = useState('');
@@ -51,7 +53,7 @@ export const MalTriagePage: React.FC = () => {
       const res = await api.triageArtifact(filename, contentRawHex);
       setTriageData(res);
     } catch (e: any) {
-      alert(`Triage error: ${e.message}`);
+      toast.error(`Triage error: ${e.message}`);
     } finally {
       setLoading(false);
     }
@@ -59,7 +61,7 @@ export const MalTriagePage: React.FC = () => {
 
   const handleCustomTriage = () => {
     if (!customHex.trim()) {
-      alert('Please enter hexadecimal payload bytes.');
+      toast.warning('Please enter hexadecimal payload bytes.');
       return;
     }
     handleTriage('custom_artifact.bin', customHex.trim());

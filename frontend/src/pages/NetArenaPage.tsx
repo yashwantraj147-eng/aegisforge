@@ -12,11 +12,14 @@ import {
   Lock,
   ArrowRight
 } from 'lucide-react';
+import { useToast } from '../components/Toast';
+import { TopologyGraph } from '../components/TopologyGraph';
 
 export const NetArenaPage: React.FC = () => {
   const [status, setStatus] = useState<NetArenaStatus | null>(null);
   const [packets, setPackets] = useState<PacketEvent[]>([]);
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
 
   const fetchStatus = async () => {
     try {
@@ -45,7 +48,7 @@ export const NetArenaPage: React.FC = () => {
       const pkts = await api.getPackets(6);
       setPackets(pkts);
     } catch (e: any) {
-      alert(`Error toggling MITM: ${e.message}`);
+      toast.error(`Error toggling MITM: ${e.message}`);
     } finally {
       setLoading(false);
     }
@@ -59,7 +62,7 @@ export const NetArenaPage: React.FC = () => {
       const res = await api.toggleDefense(nextDefense);
       setStatus(res);
     } catch (e: any) {
-      alert(`Error toggling Defense: ${e.message}`);
+      toast.error(`Error toggling Defense: ${e.message}`);
     } finally {
       setLoading(false);
     }
@@ -102,66 +105,14 @@ export const NetArenaPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Visual 3-Node Topology Diagram */}
-        <div className="py-8 px-4 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-          {/* Node 1: Gateway */}
-          <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center relative group">
-            <div className="w-12 h-12 mx-auto rounded-xl bg-blue-950 border border-blue-800 flex items-center justify-center text-blue-400 mb-2">
-              <Server className="w-6 h-6" />
-            </div>
-            <div className="font-bold text-sm text-white">Default Gateway</div>
-            <div className="font-mono text-xs text-cyan-400 mt-1">192.168.100.1</div>
-            <div className="font-mono text-[10px] text-slate-500">MAC: 00:11:22:33:44:01</div>
-            <div className="mt-2 text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400 inline-block">
-              Role: Internal Router
-            </div>
-          </div>
-
-          {/* Node 2: Attacker / Monitor */}
-          <div
-            className={`p-4 rounded-xl border text-center transition-all ${
-              status?.mitm_active
-                ? 'bg-red-950/40 border-red-800 text-red-200 shadow-lg shadow-red-950/50'
-                : 'bg-slate-950 border-slate-800 text-slate-200'
-            }`}
-          >
-            <div
-              className={`w-12 h-12 mx-auto rounded-xl flex items-center justify-center mb-2 ${
-                status?.mitm_active
-                  ? 'bg-red-950 border border-red-700 text-red-400'
-                  : 'bg-slate-900 border border-slate-800 text-slate-400'
-              }`}
-            >
-              <Radio className="w-6 h-6" />
-            </div>
-            <div className="font-bold text-sm">Monitor / Rogue Attacker</div>
-            <div className="font-mono text-xs text-amber-400 mt-1">192.168.100.200</div>
-            <div className="font-mono text-[10px] text-slate-500">MAC: 00:11:22:33:44:03</div>
-            <div className="mt-2 text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400 inline-block">
-              {status?.mitm_active ? 'ARP POISONING ACTIVE' : 'Passive Sandbox Monitor'}
-            </div>
-          </div>
-
-          {/* Node 3: Victim */}
-          <div
-            className={`p-4 rounded-xl border text-center transition-all ${
-              status?.nodes.find((n) => n.id === 'node-victim')?.is_compromised && !status?.active_defense_enabled
-                ? 'bg-orange-950/40 border-orange-800 text-orange-200'
-                : 'bg-slate-950 border-slate-800 text-slate-200'
-            }`}
-          >
-            <div className="w-12 h-12 mx-auto rounded-xl bg-purple-950 border border-purple-800 flex items-center justify-center text-purple-400 mb-2">
-              <Laptop className="w-6 h-6" />
-            </div>
-            <div className="font-bold text-sm">Victim Workstation</div>
-            <div className="font-mono text-xs text-purple-400 mt-1">192.168.100.105</div>
-            <div className="font-mono text-[10px] text-slate-500">MAC: 00:11:22:33:44:02</div>
-            <div className="mt-2 text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400 inline-block">
-              {status?.nodes.find((n) => n.id === 'node-victim')?.is_compromised && !status?.active_defense_enabled
-                ? 'TRAFFIC INTERCEPTED'
-                : 'Protected by DAI'}
-            </div>
-          </div>
+        {/* Interactive SVG Topology Canvas */}
+        <div className="pt-4">
+          <TopologyGraph
+            status={status}
+            onToggleMitm={handleToggleMitm}
+            onToggleDefense={handleToggleDefense}
+            isEngaging={loading}
+          />
         </div>
       </div>
 

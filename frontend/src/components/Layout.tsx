@@ -12,9 +12,12 @@ import {
   XCircle,
   Loader2,
   Activity,
-  Server
+  Server,
+  Menu,
+  X
 } from 'lucide-react';
 import { api, ScenarioRunResponse } from '../lib/api';
+import { useToast } from './Toast';
 
 interface LayoutProps {
   activeTab: string;
@@ -32,6 +35,8 @@ export const Layout: React.FC<LayoutProps> = ({
   const [runningScenario, setRunningScenario] = useState(false);
   const [scenarioResult, setScenarioResult] = useState<ScenarioRunResponse | null>(null);
   const [showScenarioModal, setShowScenarioModal] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const toast = useToast();
 
   const navItems = [
     { id: 'overview', label: 'Command Matrix', icon: LayoutDashboard },
@@ -49,17 +54,35 @@ export const Layout: React.FC<LayoutProps> = ({
     try {
       const res = await api.runPurpleTeam();
       setScenarioResult(res);
+      toast.success(`Scenario ${res.scenario_id} completed successfully!`);
     } catch (e: any) {
-      alert(`Scenario failed: ${e.message}`);
+      toast.error(`Scenario failed: ${e.message}`);
     } finally {
       setRunningScenario(false);
     }
   };
 
+  const handleNavClick = (id: string) => {
+    setActiveTab(id);
+    setMobileMenuOpen(false);
+  };
+
   return (
     <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
+      {/* Mobile Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-30 md:hidden"
+        />
+      )}
+
       {/* Sidebar Navigation */}
-      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between z-20 shrink-0">
+      <aside
+        className={`fixed md:static inset-y-0 left-0 w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between z-40 shrink-0 transform transition-transform duration-200 ease-in-out ${
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        }`}
+      >
         <div>
           {/* Logo Branding */}
           <div className="p-5 border-b border-slate-800/80 flex items-center justify-between">
@@ -72,6 +95,12 @@ export const Layout: React.FC<LayoutProps> = ({
                 <p className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Purple-Team Range</p>
               </div>
             </div>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="md:hidden text-slate-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Mode Pill & Health */}
@@ -97,8 +126,8 @@ export const Layout: React.FC<LayoutProps> = ({
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all duration-150 ${
+                  onClick={() => handleNavClick(item.id)}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all duration-150 cursor-pointer ${
                     isActive
                       ? 'bg-gradient-to-r from-cyan-500/20 to-blue-600/10 text-cyan-400 border border-cyan-500/30 font-semibold shadow-sm shadow-cyan-500/10'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
@@ -122,130 +151,125 @@ export const Layout: React.FC<LayoutProps> = ({
             {runningScenario ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Executing Range...
+                <span>Simulating...</span>
               </>
             ) : (
               <>
                 <Play className="w-4 h-4 fill-slate-950" />
-                Run Full Cyber Range
+                <span>Run Purple-Team Lab</span>
               </>
             )}
           </button>
-          <div className="text-[10px] text-center text-slate-500 font-mono">
-            RFC1918 Sandbox Strict Guard Active
+          <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
+            <span>ISO 29147 & RFC 9116</span>
+            <span className="text-cyan-500/80">v1.0.0</span>
           </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-slate-950">
-        <header className="h-14 border-b border-slate-800 px-6 flex items-center justify-between bg-slate-900/60 backdrop-blur shrink-0 sticky top-0 z-10">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono uppercase text-slate-500">Workbench /</span>
-            <span className="text-sm font-semibold text-slate-100 capitalize">
-              {navItems.find((n) => n.id === activeTab)?.label}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Top Header Bar */}
+        <header className="h-14 border-b border-slate-800 bg-slate-900/60 backdrop-blur px-6 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <span className="text-xs font-mono font-semibold text-slate-400 uppercase tracking-widest">
+              Workspace &bull;{' '}
+              <span className="text-cyan-400">
+                {navItems.find((n) => n.id === activeTab)?.label || 'Overview'}
+              </span>
             </span>
           </div>
 
-          <div className="flex items-center gap-3 text-xs">
-            <div className="flex items-center gap-2 px-2.5 py-1 bg-slate-950 rounded-md border border-slate-800 text-slate-400 font-mono">
-              <Activity className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Safety Guard:</span>
-              <span className="text-emerald-400 font-bold">ALLOWLIST_ONLY</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1 bg-slate-950 border border-slate-800 rounded-full text-xs font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-slate-300">Guard: RFC1918 Locked</span>
             </div>
           </div>
         </header>
 
-        <div className="flex-1 p-6">{children}</div>
-      </main>
+        {/* Dynamic Page Views */}
+        <main className="flex-1 overflow-y-auto p-6 bg-slate-950 relative">
+          {children}
+        </main>
+      </div>
 
-      {/* End-to-End Scenario Execution Modal */}
+      {/* Scenario Orchestration Progress Modal */}
       {showScenarioModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+            <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-cyan-950 border border-cyan-800/60">
-                  <Play className="w-4 h-4 text-cyan-400" />
+                <div className="p-2 rounded-xl bg-cyan-950 border border-cyan-800 text-cyan-400">
+                  <Activity className="w-5 h-5 animate-pulse" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-base">Purple-Team Cyber Range Engagement</h3>
-                  <p className="text-xs text-slate-400">Automated 6-Stage Offensive Verification & Defensive Mitigation</p>
+                  <h3 className="font-bold text-white text-base">Purple-Team Cyber Range Orchestrator</h3>
+                  <p className="text-xs text-slate-400 font-mono">
+                    {runningScenario ? 'Executing 6-Stage Autonomous Engagement...' : 'Execution Completed'}
+                  </p>
                 </div>
               </div>
-              <button
-                onClick={() => setShowScenarioModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
-              >
-                ✕
-              </button>
+              {!runningScenario && (
+                <button
+                  onClick={() => setShowScenarioModal(false)}
+                  className="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition"
+                >
+                  Close
+                </button>
+              )}
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-4 font-mono text-xs">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {runningScenario && (
-                <div className="flex flex-col items-center justify-center py-8 space-y-3">
-                  <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
-                  <p className="text-sm font-sans text-slate-300">Orchestrating multi-stage purple-team attack & defense cycle...</p>
-                  <p className="text-xs text-slate-500">Broadcasting live telemetry packets across virtual micro-network.</p>
+                <div className="flex flex-col items-center justify-center py-10 space-y-3">
+                  <Loader2 className="w-10 h-10 text-cyan-400 animate-spin" />
+                  <p className="text-sm font-medium text-slate-300">
+                    Running live offensive probes and defensive mitigations across isolated mock targets...
+                  </p>
                 </div>
               )}
 
               {scenarioResult && (
                 <div className="space-y-4">
-                  <div className="p-3 bg-emerald-950/30 border border-emerald-800/60 rounded-xl flex items-center justify-between">
-                    <div>
-                      <div className="text-emerald-400 font-bold text-sm font-sans">Exercise Successfully Completed</div>
-                      <div className="text-slate-400 text-xs mt-0.5">ID: {scenarioResult.scenario_id}</div>
+                  <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-2">
+                    <div className="flex justify-between font-mono text-slate-400">
+                      <span>Scenario ID: {scenarioResult.scenario_id}</span>
+                      <span>Total Steps: {scenarioResult.total_steps}</span>
                     </div>
-                    <span className="px-2.5 py-1 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold text-xs">
-                      {scenarioResult.status}
-                    </span>
+                    <div className="text-white font-medium">{scenarioResult.final_report_summary}</div>
                   </div>
 
-                  <p className="text-slate-300 font-sans text-xs leading-relaxed bg-slate-950 p-3 rounded-lg border border-slate-800">
-                    {scenarioResult.final_report_summary}
-                  </p>
-
                   <div className="space-y-2">
-                    <h4 className="font-bold text-slate-200 uppercase tracking-wider text-[11px]">Execution Stages</h4>
+                    <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider font-mono">
+                      Engaged Stages & Telemetry
+                    </h4>
                     {scenarioResult.steps.map((st) => (
                       <div
                         key={st.step_id}
-                        className="p-3 bg-slate-950 rounded-lg border border-slate-800/80 flex items-start justify-between gap-3"
+                        className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-start gap-3"
                       >
-                        <div className="space-y-1">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                        <div className="space-y-1 text-xs">
                           <div className="flex items-center gap-2">
-                            <span className="text-cyan-400 font-bold">Stage {st.step_id}:</span>
-                            <span className="text-white font-medium font-sans">{st.name}</span>
-                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">
+                            <span className="font-bold text-white">Stage {st.step_id}: {st.name}</span>
+                            <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-slate-900 text-cyan-400 border border-slate-800">
                               {st.module}
                             </span>
                           </div>
-                          <p className="text-slate-400 font-sans text-xs leading-normal">{st.details}</p>
+                          <p className="text-slate-400 leading-relaxed">{st.details}</p>
                         </div>
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
-                            st.status === 'MITIGATED'
-                              ? 'bg-amber-950 text-amber-300 border border-amber-800'
-                              : 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                          }`}
-                        >
-                          {st.status}
-                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
-            </div>
-
-            <div className="p-4 border-t border-slate-800 bg-slate-950 flex justify-end">
-              <button
-                onClick={() => setShowScenarioModal(false)}
-                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition"
-              >
-                Close Report
-              </button>
             </div>
           </div>
         </div>

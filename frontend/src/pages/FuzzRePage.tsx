@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api, ProtocolFuzzResponse, ACLAuditResponse, BinaryAuditResponse } from '../lib/api';
+import { useToast } from '../components/Toast';
 import {
   Bug,
   ShieldCheck,
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react';
 
 export const FuzzRePage: React.FC = () => {
+  const toast = useToast();
   const [activeSubTab, setActiveSubTab] = useState<'fuzzer' | 'binary' | 'acl'>('fuzzer');
 
   // Fuzzing Campaign State
@@ -63,7 +65,7 @@ export const FuzzRePage: React.FC = () => {
       const res = await api.fuzzProtocol(targetHost, targetPort, maxCases);
       setFuzzResult(res);
     } catch (e: any) {
-      alert(`Fuzzing error: ${e.message}`);
+      toast.error(`Fuzzing error: ${e.message}`);
     } finally {
       setFuzzing(false);
     }
@@ -76,7 +78,7 @@ export const FuzzRePage: React.FC = () => {
       const res = await api.auditBinary(filename);
       setBinaryAuditResult(res);
     } catch (e: any) {
-      alert(`Binary audit error: ${e.message}`);
+      toast.error(`Binary audit error: ${e.message}`);
     } finally {
       setBinaryLoading(false);
     }
@@ -88,7 +90,7 @@ export const FuzzRePage: React.FC = () => {
       const res = await api.auditAcl(parsed);
       setAclResult(res);
     } catch (e: any) {
-      alert(`ACL Audit error: ${e.message}`);
+      toast.error(`ACL Audit error: ${e.message}`);
     }
   };
 

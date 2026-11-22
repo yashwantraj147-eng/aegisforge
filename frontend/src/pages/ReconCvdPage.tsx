@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { api, ScanResult, CVSSResponse, CVDResponse } from '../lib/api';
+import { useToast } from '../components/Toast';
 import {
   Radar,
   ShieldCheck,
@@ -10,10 +11,12 @@ import {
   Copy,
   Check,
   Download,
+  Printer,
   AlertTriangle
 } from 'lucide-react';
 
 export const ReconCvdPage: React.FC = () => {
+  const toast = useToast();
   // Recon State
   const [target, setTarget] = useState('192.168.100.105');
   const [startPort, setStartPort] = useState(20);
@@ -63,7 +66,7 @@ export const ReconCvdPage: React.FC = () => {
       const res = await api.calculateCvss(cvssMetrics);
       setCvssResult(res);
     } catch (e: any) {
-      alert(`CVSS Calc error: ${e.message}`);
+      toast.error(`CVSS Calc error: ${e.message}`);
     }
   };
 
@@ -90,8 +93,9 @@ export const ReconCvdPage: React.FC = () => {
         severity: cvssResult?.severity_rating || 'CRITICAL',
       });
       setCvdResult(res);
+      toast.success('Coordinated Vulnerability Disclosure (CVD) advisory generated!');
     } catch (e: any) {
-      alert(`CVD Report error: ${e.message}`);
+      toast.error(`CVD Report error: ${e.message}`);
     }
   };
 
@@ -99,7 +103,47 @@ export const ReconCvdPage: React.FC = () => {
     if (!cvdResult) return;
     navigator.clipboard.writeText(cvdResult.markdown_content);
     setCopiedMd(true);
+    toast.info('Advisory markdown copied to clipboard');
     setTimeout(() => setCopiedMd(false), 2000);
+  };
+
+  const handleDownloadMd = () => {
+    if (!cvdResult) return;
+    const blob = new Blob([cvdResult.markdown_content], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${advisoryId || 'advisory'}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Advisory downloaded as Markdown file');
+  };
+
+  const handlePrintAdvisory = () => {
+    if (!cvdResult) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${advisoryId} - Security Advisory</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #111; line-height: 1.6; }
+            pre { background: #f4f4f4; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: monospace; }
+            h1, h2, h3 { color: #0f172a; }
+            hr { border: none; border-top: 1px solid #e2e8f0; margin: 24px 0; }
+          </style>
+        </head>
+        <body>
+          <div style="font-family: monospace; white-space: pre-wrap;">${cvdResult.markdown_content}</div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
   };
 
   return (
@@ -410,15 +454,34 @@ export const ReconCvdPage: React.FC = () => {
           </div>
 
           {cvdResult && (
-            <div className="border-t border-slate-800 pt-3 flex items-center justify-between">
+            <div className="border-t border-slate-800 pt-3 flex items-center justify-between flex-wrap gap-2">
               <span className="text-xs text-emerald-400 font-medium">Advisory generated successfully</span>
-              <button
-                onClick={handleCopyMd}
-                className="flex items-center gap-1.5 px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-white transition"
-              >
-                {copiedMd ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                {copiedMd ? 'Copied Markdown' : 'Copy Advisory'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCopyMd}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-white transition cursor-pointer"
+                  title="Copy to clipboard"
+                >
+                  {copiedMd ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedMd ? 'Copied' : 'Copy'}
+                </button>
+                <button
+                  onClick={handleDownloadMd}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-cyan-950 hover:bg-cyan-900 border border-cyan-800 text-xs text-cyan-300 transition cursor-pointer"
+                  title="Download Markdown advisory"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download .md
+                </button>
+                <button
+                  onClick={handlePrintAdvisory}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 transition cursor-pointer"
+                  title="Print or save as PDF"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  Print / PDF
+                </button>
+              </div>
             </div>
           )}
         </div>
