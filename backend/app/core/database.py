@@ -17,62 +17,69 @@ class DatabaseManager:
     def __init__(self, db_path: Optional[Path] = None):
         self.db_path = db_path or (settings.BASE_DIR / "data" / "aegisforge.db")
         self._lock = asyncio.Lock()
+        self._initialized = False
+
+    def _sync_create_tables(self, conn: sqlite3.Connection):
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS scenario_runs (
+                scenario_id TEXT PRIMARY KEY,
+                title TEXT NOT NULL,
+                started_at TEXT NOT NULL,
+                completed_at TEXT NOT NULL,
+                status TEXT NOT NULL,
+                total_steps INTEGER NOT NULL,
+                steps_json TEXT NOT NULL,
+                final_summary TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS scan_records (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                target TEXT NOT NULL,
+                scan_duration_ms REAL NOT NULL,
+                open_ports_count INTEGER NOT NULL,
+                open_ports_json TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS fuzz_campaigns (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                target TEXT NOT NULL,
+                total_cases_run INTEGER NOT NULL,
+                crashes_detected INTEGER NOT NULL,
+                crashes_json TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS triage_reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                filename TEXT NOT NULL,
+                file_type TEXT NOT NULL,
+                entropy REAL NOT NULL,
+                risk_score REAL NOT NULL,
+                verdict TEXT NOT NULL,
+                yara_matches_count INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        conn.commit()
 
     def _get_connection(self) -> sqlite3.Connection:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(str(self.db_path))
         conn.row_factory = sqlite3.Row
+        if not self._initialized:
+            self._sync_create_tables(conn)
+            self._initialized = True
         return conn
 
     def _sync_init_db(self):
-        with self._get_connection() as conn:
-            conn.execute("PRAGMA journal_mode=WAL;")
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS scenario_runs (
-                    scenario_id TEXT PRIMARY KEY,
-                    title TEXT NOT NULL,
-                    started_at TEXT NOT NULL,
-                    completed_at TEXT NOT NULL,
-                    status TEXT NOT NULL,
-                    total_steps INTEGER NOT NULL,
-                    steps_json TEXT NOT NULL,
-                    final_summary TEXT NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-            """)
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS scan_records (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    target TEXT NOT NULL,
-                    scan_duration_ms REAL NOT NULL,
-                    open_ports_count INTEGER NOT NULL,
-                    open_ports_json TEXT NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-            """)
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS fuzz_campaigns (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    target TEXT NOT NULL,
-                    total_cases_run INTEGER NOT NULL,
-                    crashes_detected INTEGER NOT NULL,
-                    crashes_json TEXT NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-            """)
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS triage_reports (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    filename TEXT NOT NULL,
-                    file_type TEXT NOT NULL,
-                    entropy REAL NOT NULL,
-                    risk_score REAL NOT NULL,
-                    verdict TEXT NOT NULL,
-                    yara_matches_count INTEGER NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-            """)
-            conn.commit()
+        with self._get_connection():
+            pass
 
     async def init_db(self):
         """Initializes database schema asynchronously."""
