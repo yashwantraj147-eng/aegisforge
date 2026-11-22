@@ -183,6 +183,7 @@ class SafetyGuard:
             raise ValueError(f"Port range ({start_port}-{end_port}) must be between 1 and 65535.")
         if start_port > end_port:
             raise ValueError(f"Start port ({start_port}) cannot be greater than end port ({end_port}).")
+        return True
 
     def validate_payload_size(
         self,
