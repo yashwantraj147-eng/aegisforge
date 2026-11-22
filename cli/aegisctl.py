@@ -63,7 +63,7 @@ def recon(
 ):
     """Scan and discover active ports and service banners within authorized lab scope."""
     console.print(Panel(f"[bold cyan]AegisForge Reconnaissance[/bold cyan] - Target: [yellow]{target}[/yellow]"))
-    
+
     # Scope check
     try:
         safety_guard.validate_target(target)
@@ -96,7 +96,7 @@ def shellcode(
 ):
     """Disassemble raw shellcode bytes, audit bad characters, and detect NOP sleds."""
     console.print(Panel(f"[bold magenta]Exploit Studio: Shellcode & Bad-Char Analysis[/bold magenta] (Arch: {arch})"))
-    
+
     try:
         req = ShellcodeAnalyzeRequest(hex_payload=payload, architecture=arch)
         res = exploit_studio_engine.analyze_shellcode(req)
@@ -131,7 +131,7 @@ def fuzz(
 ):
     """Execute stateful protocol fuzzing campaign with mutation strategies and crash isolation."""
     console.print(Panel(f"[bold green]Stateful Protocol Fuzzer[/bold green] - Target: [yellow]{host}:{port}[/yellow]"))
-    
+
     req = ProtocolFuzzRequest(target_host=host, target_port=port, max_cases=cases)
     with console.status(f"[bold green]Running {cases} mutation fuzz cases..."):
         res = asyncio.run(fuzz_engine.run_fuzzing_campaign(req))

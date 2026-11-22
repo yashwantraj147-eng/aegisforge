@@ -87,7 +87,7 @@ class CVSSv31Calculator:
 
         # ISS = 1 - [ (1 - C) * (1 - I) * (1 - A) ]
         iss = 1.0 - ((1.0 - c) * (1.0 - i) * (1.0 - a))
-        
+
         # Impact Sub score
         if scope == "UNCHANGED":
             impact = 6.42 * iss
@@ -218,7 +218,7 @@ class ReconEngine:
             tasks = []
             # Bound live scan batch to 200 ports for performance & safety
             scan_end = min(req.end_port, req.start_port + 200)
-            
+
             async def probe_port(port: int):
                 nonlocal total_probed
                 total_probed += 1
@@ -275,7 +275,7 @@ class CVDReportGenerator:
     @staticmethod
     def generate(req: CVDReportRequest) -> CVDReportResponse:
         now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-        
+
         # Build timeline bullets
         timeline_md = ""
         timeline_html = ""
@@ -312,7 +312,7 @@ class CVDReportGenerator:
         for idx, step in enumerate(req.reproduction_steps, 1):
             markdown += f"{idx}. {step}\n"
 
-        markdown += f"""
+        markdown += """
 ## 4. Remediation & Patch Guidance
 """
         for r in req.remediation_recommendations:
@@ -329,7 +329,7 @@ class CVDReportGenerator:
         # HTML Report
         repro_li = "".join([f"<li>{s}</li>" for s in req.reproduction_steps])
         remed_li = "".join([f"<li>{r}</li>" for r in req.remediation_recommendations])
-        
+
         html = f"""<div class="cvd-advisory font-sans bg-slate-900 text-slate-100 p-6 rounded-lg border border-slate-700">
   <div class="flex justify-between items-center border-b border-slate-800 pb-4 mb-4">
     <div>

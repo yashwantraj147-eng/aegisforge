@@ -11,7 +11,7 @@ def test_net_arena_baseline(arena):
     assert len(status.nodes) == 3
     assert status.mitm_active is False
     assert status.active_defense_enabled is True
-    
+
     # Check ARP Table has valid Gateway
     gw_entry = arena.victim_arp_table[arena.gateway.ip]
     assert gw_entry.mac == arena.gateway.mac
@@ -33,7 +33,7 @@ async def test_mitm_poisons_arp_when_defense_disabled(arena):
     # Disable defense
     await arena.toggle_defense(ToggleActiveDefenseRequest(enable=False))
     res = await arena.toggle_mitm(ToggleMITMRequest(enable=True))
-    
+
     # Now victim ARP table should be poisoned with attacker MAC
     gw_entry = arena.victim_arp_table[arena.gateway.ip]
     assert gw_entry.mac == arena.attacker.mac

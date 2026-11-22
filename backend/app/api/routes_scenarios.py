@@ -81,7 +81,7 @@ async def run_purple_team_exercise():
     # Ensure active defense is on
     await net_arena_engine.toggle_defense(ToggleActiveDefenseRequest(enable=True, enable_static_pinning=True))
     mitm_res = await net_arena_engine.toggle_mitm(ToggleMITMRequest(enable=True))
-    
+
     step2 = ScenarioStep(
         step_id=2,
         name="Adversary ARP Spoofing & Active Defense Neutralization",

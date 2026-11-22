@@ -12,7 +12,7 @@ def calculate_shannon_entropy(data: bytes) -> float:
     freq = [0] * 256
     for b in data:
         freq[b] += 1
-    
+
     entropy = 0.0
     for count in freq:
         if count > 0:

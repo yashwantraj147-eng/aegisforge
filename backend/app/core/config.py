@@ -12,15 +12,15 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "AegisForge Cyber Range & Vulnerability Workbench"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
-    
+
     # Dual Execution Mode (default SIMULATION for zero-privilege, portable execution)
     MODE: ExecutionMode = ExecutionMode.SIMULATION
-    
+
     # Base directory paths
     BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
     RULES_PATH: Path = BASE_DIR / "rules" / "default_yara_rules.json"
     SAMPLE_ARTIFACTS_PATH: Path = BASE_DIR.parent / "sandbox" / "sample_artifacts"
-    
+
     # Safety guardrails
     ENFORCE_SAFETY_GUARD: bool = True
     MAX_PAYLOAD_BYTES: int = 1048576  # 1 MB max for hex payloads
@@ -50,7 +50,7 @@ class Settings(BaseSettings):
         "fc00::/7",         # IPv6 ULA
         "fe80::/10"         # IPv6 Link-Local
     ]
-    
+
     ALLOWED_HOSTNAMES: list[str] = [
         "localhost",
         "*.local",
@@ -62,12 +62,12 @@ class Settings(BaseSettings):
         "victim.aegis.internal",
         "monitor.aegis.internal"
     ]
-    
+
     # Mock Targets in Sandbox
     GATEWAY_IP: str = "192.168.100.1"
     VICTIM_IP: str = "192.168.100.105"
     ATTACKER_IP: str = "192.168.100.200"
-    
+
 
 
 settings = Settings()

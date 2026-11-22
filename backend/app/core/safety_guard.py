@@ -19,7 +19,7 @@ class SafetyGuard:
     are strictly isolated to internal virtual environments or loopback interfaces.
     Zero external internet/WAN probing is permitted.
     """
-    
+
     def __init__(self):
         self.allowed_networks = [
             ipaddress.ip_network(net) for net in settings.ALLOWED_NETWORKS
@@ -68,7 +68,7 @@ class SafetyGuard:
           'gateway.aegis.internal'   -> ('gateway.aegis.internal', None)
         """
         cleaned = target.strip()
-        
+
         # Remove common protocol schemes
         for scheme in ["http://", "https://", "tcp://", "udp://", "ssh://", "ftp://", "ws://", "wss://"]:
             if cleaned.lower().startswith(scheme):

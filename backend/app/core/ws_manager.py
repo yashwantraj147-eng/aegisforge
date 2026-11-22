@@ -49,7 +49,7 @@ class WebSocketManager:
             "data": data or {},
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
-        
+
         # Keep ring buffer of recent events for new clients
         self.event_history.append(payload)
         if len(self.event_history) > self._max_history:

@@ -28,7 +28,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # Filter out timestamps older than 60 seconds
         timestamps = [t for t in self.requests_log[client_ip] if t > window_start]
-        
+
         if len(timestamps) >= self.max_requests:
             return JSONResponse(
                 status_code=429,

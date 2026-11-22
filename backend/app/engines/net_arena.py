@@ -110,7 +110,7 @@ class NetArenaEngine:
                         f"rogue MAC {self.attacker.mac}. Blocked by Dynamic ARP Inspection (DAI)."
                     )
                     self.defensive_actions.append(action_msg)
-                    
+
                     if self.static_pinning_enabled:
                         pin_msg = f"[PINNING] Enforced permanent static binding: {self.gateway.ip} -> {self.gateway.mac}"
                         self.defensive_actions.append(pin_msg)
@@ -121,7 +121,7 @@ class NetArenaEngine:
                             state="PINNED",
                             last_seen=now
                         )
-                    
+
                     if self.gratuitous_counter_enabled:
                         counter_msg = f"[COUNTER] Broadcasted gratuitous ARP correction for {self.gateway.ip} to flush poisoned caches."
                         self.defensive_actions.append(counter_msg)
@@ -207,13 +207,13 @@ class NetArenaEngine:
         """Generates realistic synthetic packet stream for frontend real-time inspection."""
         packets: List[PacketEvent] = []
         now = datetime.now(timezone.utc).isoformat()
-        
+
         protocols = ["ARP", "DNS", "HTTP", "TCP", "ICMP"]
         for _ in range(count):
             self.total_packets_inspected += 1
             proto = random.choice(protocols)
             pkt_id = f"pkt-{self.total_packets_inspected}"
-            
+
             if proto == "ARP":
                 if self.mitm_active and not self.active_defense_enabled:
                     src_ip = self.gateway.ip
@@ -263,7 +263,7 @@ class NetArenaEngine:
                 info=info,
                 is_anomalous=anomalous
             ))
-            
+
         return packets
 
 net_arena_engine = NetArenaEngine()

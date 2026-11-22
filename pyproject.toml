@@ -1,0 +1,19 @@
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+]
+ignore = [
+    "E501",  # line too long
+    "E402",  # module level import not at top of file
+    "F401",  # unused imports in init files
+    "F841",  # unused local variables
+    "E701",  # multiple statements on one line (colon)
+    "W291",  # trailing whitespace (used for markdown linebreaks)
+    "W293",  # blank line contains whitespace
+]

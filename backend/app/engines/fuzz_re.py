@@ -180,7 +180,7 @@ class StatefulProtocolFuzzer:
                 crash_repr = payload.decode(errors="replace")
                 if len(crash_repr) > 50:
                     crash_repr = crash_repr[:47] + "..."
-                
+
                 # De-duplicate by strategy and crash register
                 crashes.append(FuzzCrashReport(
                     case_id=case_idx,

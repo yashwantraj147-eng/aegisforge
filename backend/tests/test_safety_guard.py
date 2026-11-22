@@ -9,15 +9,15 @@ def test_allowed_loopback_and_rfc1918(guard):
     # Loopback
     assert guard.is_ip_allowed("127.0.0.1") is True
     assert guard.is_ip_allowed("127.0.1.1") is True
-    
+
     # Class A RFC1918
     assert guard.is_ip_allowed("10.0.0.1") is True
     assert guard.is_ip_allowed("10.254.1.50") is True
-    
+
     # Class B RFC1918
     assert guard.is_ip_allowed("172.16.0.1") is True
     assert guard.is_ip_allowed("172.31.255.254") is True
-    
+
     # Class C RFC1918
     assert guard.is_ip_allowed("192.168.1.1") is True
     assert guard.is_ip_allowed("192.168.100.105") is True
@@ -49,7 +49,7 @@ def test_cidr_validation(guard):
     # Allowed private CIDRs
     valid, _ = guard.validate_target("192.168.100.0/24")
     assert valid is True
-    
+
     valid, _ = guard.validate_target("10.10.0.0/16")
     assert valid is True
 

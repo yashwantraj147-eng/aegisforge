@@ -107,7 +107,7 @@ class MalwareTriageEngine:
     def extract_iocs(data: bytes) -> Dict[str, List[str]]:
         """Detects validated IPs, URLs, and emails inside raw payload."""
         text = data.decode("latin-1", errors="ignore")
-        
+
         # Regex patterns
         ip_pattern = r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"
         url_pattern = r"https?://[a-zA-Z0-9_\-\.]+(?::[0-9]+)?(?:/[^\s\"'<>]*)?"
@@ -140,7 +140,7 @@ class MalwareTriageEngine:
 
         for rule in self.rules:
             matched_items = []
-            
+
             # Check entropy threshold
             if "min_entropy" in rule:
                 if overall_entropy >= rule["min_entropy"]:
@@ -150,7 +150,7 @@ class MalwareTriageEngine:
             if "strings" in rule:
                 target_strings = rule["strings"]
                 found_strings = [s for s in target_strings if s in text]
-                
+
                 cond = rule.get("condition", "any_of")
                 if cond == "any_of" and len(found_strings) > 0:
                     matched_items.extend(found_strings)
@@ -244,7 +244,7 @@ class MalwareTriageEngine:
                     data = safe_filename.encode("utf-8")
 
         file_len = len(data)
-        
+
         # Cryptographic Hashes
         hashes = {
             "md5": hashlib.md5(data).hexdigest(),
