@@ -1,0 +1,49 @@
+services:
+  gateway:
+    image: alpine:latest
+    container_name: aegis_gateway
+    command: /bin/sh -c "ip route add default via 192.168.100.1 2>/dev/null; while true; do sleep 3600; done"
+    networks:
+      aegis_isolated_net:
+        ipv4_address: 192.168.100.1
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+
+  victim:
+    image: alpine:latest
+    container_name: aegis_victim
+    command: /bin/sh -c "while true; do sleep 3600; done"
+    networks:
+      aegis_isolated_net:
+        ipv4_address: 192.168.100.105
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+
+  monitor_attacker:
+    image: python:3.11-slim
+    container_name: aegis_monitor_attacker
+    working_dir: /sandbox
+    volumes:
+      - .:/sandbox
+    command: /bin/sh -c "python -u /sandbox/vulnerable_targets/mini_proto_server.py"
+    networks:
+      aegis_isolated_net:
+        ipv4_address: 192.168.100.200
+    ports:
+      - "5000:5000"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    restart: unless-stopped
+
+networks:
+  aegis_isolated_net:
+    driver: bridge
+    internal: true # STRICTLY NO EXTERNAL INTERNET ROUTING
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.100.0/24
+          gateway: 192.168.100.254

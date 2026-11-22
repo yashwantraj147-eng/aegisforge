@@ -1,0 +1,89 @@
+{
+  "rules": [
+    {
+      "id": "RULE_001_EICAR_STANDARD",
+      "name": "EICAR_Standard_AV_Test_File",
+      "description": "Matches the official harmless European Institute for Computer Antivirus Research test string.",
+      "severity": "CRITICAL",
+      "mitre_technique": "T1204 - User Execution",
+      "tags": ["antivirus", "eicar", "test_file"],
+      "condition": "any_of",
+      "strings": [
+        "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+      ]
+    },
+    {
+      "id": "RULE_002_HIGH_ENTROPY_PACKED",
+      "name": "High_Entropy_Packed_Section",
+      "description": "Identifies sections or artifacts with Shannon entropy exceeding 7.2, characteristic of UPX packing or byte encryption.",
+      "severity": "HIGH",
+      "mitre_technique": "T1027 - Obfuscated Files or Information",
+      "tags": ["packing", "entropy", "obfuscation"],
+      "min_entropy": 7.2
+    },
+    {
+      "id": "RULE_003_SUSPICIOUS_WIN32_PROCESS_INJECTION",
+      "name": "Suspicious_Process_Injection_Imports",
+      "description": "Detects classic Win32 API combinations used for cross-process memory allocation and remote thread execution.",
+      "severity": "HIGH",
+      "mitre_technique": "T1055 - Process Injection",
+      "tags": ["injection", "win32", "api"],
+      "condition": "at_least_n",
+      "threshold": 2,
+      "strings": [
+        "VirtualAllocEx",
+        "WriteProcessMemory",
+        "CreateRemoteThread",
+        "QueueUserAPC",
+        "SetThreadContext",
+        "OpenProcess"
+      ]
+    },
+    {
+      "id": "RULE_004_NOP_SLED_SHELLCODE",
+      "name": "NOP_Sled_Heuristic",
+      "description": "Detects byte sequence of repeated x86 NOP instructions (0x90) indicative of shellcode alignment.",
+      "severity": "MEDIUM",
+      "mitre_technique": "T1059 - Command and Scripting Interpreter",
+      "tags": ["shellcode", "nop_sled", "exploit"],
+      "hex_patterns": [
+        "9090909090909090",
+        "90 90 90 90 90 90 90 90"
+      ]
+    },
+    {
+      "id": "RULE_005_OBFUSCATED_POWERSHELL_LAUNCHER",
+      "name": "Obfuscated_PowerShell_Execution",
+      "description": "Detects encoded command execution flags and download cradles in script or artifact payloads.",
+      "severity": "HIGH",
+      "mitre_technique": "T1059.001 - PowerShell",
+      "tags": ["powershell", "evasion", "download_cradle"],
+      "condition": "any_of",
+      "strings": [
+        "-EncodedCommand",
+        "-enc ",
+        "DownloadString",
+        "Invoke-Expression",
+        "IEX(",
+        "System.Net.WebClient"
+      ]
+    },
+    {
+      "id": "RULE_006_SUSPICIOUS_NETWORK_BEACON",
+      "name": "Suspicious_Network_Beacon_Indicators",
+      "description": "Detects hardcoded common C2 communication patterns or raw socket APIs in static artifacts.",
+      "severity": "MEDIUM",
+      "mitre_technique": "T1071 - Application Layer Protocol",
+      "tags": ["c2", "socket", "beacon"],
+      "condition": "at_least_n",
+      "threshold": 2,
+      "strings": [
+        "WSAStartup",
+        "connect",
+        "InternetOpenA",
+        "HttpSendRequest",
+        "WinHttpConnect"
+      ]
+    }
+  ]
+}

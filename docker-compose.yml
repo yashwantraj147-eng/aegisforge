@@ -1,0 +1,71 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: aegis_backend
+    environment:
+      - MODE=SIMULATION
+      - ENFORCE_SAFETY_GUARD=true
+    ports:
+      - "8000:8000"
+    networks:
+      - aegis_internal_net
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: aegis_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - aegis_internal_net
+    restart: unless-stopped
+
+  sandbox_gateway:
+    image: alpine:latest
+    container_name: aegis_sandbox_gateway
+    command: /bin/sh -c "while true; do sleep 3600; done"
+    networks:
+      aegis_sandbox_net:
+        ipv4_address: 192.168.100.1
+    restart: unless-stopped
+
+  sandbox_victim:
+    image: alpine:latest
+    container_name: aegis_sandbox_victim
+    command: /bin/sh -c "while true; do sleep 3600; done"
+    networks:
+      aegis_sandbox_net:
+        ipv4_address: 192.168.100.105
+    restart: unless-stopped
+
+  sandbox_attacker:
+    image: python:3.11-slim
+    container_name: aegis_sandbox_attacker
+    working_dir: /sandbox
+    volumes:
+      - ./sandbox:/sandbox
+    command: /bin/sh -c "python -u /sandbox/vulnerable_targets/mini_proto_server.py"
+    networks:
+      aegis_sandbox_net:
+        ipv4_address: 192.168.100.200
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+networks:
+  aegis_internal_net:
+    driver: bridge
+  aegis_sandbox_net:
+    driver: bridge
+    internal: true # STRICT LAB ISOLATION: NO EXTERNAL INTERNET ROUTING
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.100.0/24
+          gateway: 192.168.100.254

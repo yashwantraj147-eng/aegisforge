@@ -1,0 +1,37 @@
+{
+  "metadata": {
+    "source": "AegisForge Local Hardening Audit",
+    "audited_host": "victim.aegis.internal",
+    "date": "2026-11-21"
+  },
+  "rules": [
+    {
+      "path": "C:\\Windows\\System32\\Spool\\PRINTERS\\daemon.exe",
+      "principal": "Everyone",
+      "permission": "FullControl",
+      "type": "Allow",
+      "inheritance": "None"
+    },
+    {
+      "path": "C:\\Program Files\\AegisForge\\agent.exe",
+      "principal": "NT AUTHORITY\\Authenticated Users",
+      "permission": "WriteData",
+      "type": "Allow",
+      "inheritance": "ContainerInherit"
+    },
+    {
+      "path": "C:\\Windows\\System32\\ntoskrnl.exe",
+      "principal": "NT AUTHORITY\\SYSTEM",
+      "permission": "FullControl",
+      "type": "Allow",
+      "inheritance": "ObjectInherit"
+    },
+    {
+      "path": "C:\\Services\\LegacyApp\\service.bat",
+      "principal": "BUILTIN\\Users",
+      "permission": "GenericWrite",
+      "type": "Allow",
+      "inheritance": "None"
+    }
+  ]
+}
