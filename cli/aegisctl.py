@@ -278,7 +278,7 @@ def health():
     ]
     table = Table(title="AegisForge Core Engine Diagnostic Status")
     table.add_column("Engine / Component", style="cyan")
-    table.add_column("Status", style="green font-bold")
+    table.add_column("Status", style="bold green")
     table.add_column("Diagnostics", style="dim")
     for name, status, diag in checks:
         table.add_row(name, f"✔ {status}", diag)
