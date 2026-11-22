@@ -10,6 +10,8 @@ jobs:
   backend-test:
     name: Backend Pytest & Safety Audit
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: .
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -36,7 +38,7 @@ jobs:
 
       - name: Run Pytest Test Suite with Coverage
         run: |
-          pytest backend/tests -v --cov=backend/app --cov-report=term-missing
+          python -m pytest backend/tests -v --cov=backend/app --cov-report=term-missing
 
       - name: Verify CLI Companion Tooling
         run: |

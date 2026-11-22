@@ -17,3 +17,9 @@ ignore = [
     "W291",  # trailing whitespace (used for markdown linebreaks)
     "W293",  # blank line contains whitespace
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["backend/tests"]
+python_files = ["test_*.py"]
+asyncio_mode = "auto"
