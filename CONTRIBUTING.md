@@ -27,7 +27,7 @@ Please also read our [SECURITY.md](SECURITY.md) and [docs/ETHICAL_DISCLOSURE_GUI
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/your-org/aegisforge.git
+git clone https://github.com/yashwantraj147-eng/aegisforge.git
 cd aegisforge
 ```
 

@@ -4,8 +4,8 @@
 
 **Industry-Grade Purple-Team Cyber Range & Defensive Vulnerability Workbench**
 
-[![CI Build](https://img.shields.io/badge/CI-Passing-brightgreen?style=for-the-badge&logo=githubactions)](https://github.com/your-org/aegisforge/actions)
-[![Pytest Suite](https://img.shields.io/badge/Tests-49%2F49%20Passed-success?style=for-the-badge&logo=pytest)](https://github.com/your-org/aegisforge)
+[![CI Build](https://img.shields.io/badge/CI-Passing-brightgreen?style=for-the-badge&logo=githubactions)](https://github.com/yashwantraj147-eng/aegisforge/actions)
+[![Pytest Suite](https://img.shields.io/badge/Tests-49%2F49%20Passed-success?style=for-the-badge&logo=pytest)](https://github.com/yashwantraj147-eng/aegisforge)
 [![Python Version](https://img.shields.io/badge/Python-3.11%20%7C%203.12%20%7C%203.13-blue?style=for-the-badge&logo=python)](https://www.python.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict%20Mode-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/Frontend-React%2019%20%2B%20Vite-61dafb?style=for-the-badge&logo=react)](https://react.dev/)
@@ -103,7 +103,7 @@ AegisForge supports two execution paradigms out of the box:
 ### 1. Installation
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/aegisforge.git
+git clone https://github.com/yashwantraj147-eng/aegisforge.git
 cd aegisforge
 
 # Set up Python backend
