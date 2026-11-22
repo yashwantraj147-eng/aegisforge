@@ -1,4 +1,11 @@
+# ==============================================================================
+# AegisForge Isolated 3-Node Cyber Range Network Sandbox
+# Strictly isolated internal bridge network (no external WAN routing)
+# ==============================================================================
 services:
+  # ----------------------------------------------------------------------------
+  # Node 1: Simulated Default Gateway
+  # ----------------------------------------------------------------------------
   gateway:
     image: alpine:latest
     container_name: aegis_gateway
@@ -8,8 +15,22 @@ services:
         ipv4_address: 192.168.100.1
     cap_add:
       - NET_ADMIN
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 128M
+          pids: 30
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
     restart: unless-stopped
 
+  # ----------------------------------------------------------------------------
+  # Node 2: Simulated Victim Host
+  # ----------------------------------------------------------------------------
   victim:
     image: alpine:latest
     container_name: aegis_victim
@@ -19,14 +40,28 @@ services:
         ipv4_address: 192.168.100.105
     cap_add:
       - NET_ADMIN
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 128M
+          pids: 30
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
     restart: unless-stopped
 
+  # ----------------------------------------------------------------------------
+  # Node 3: Security Monitor & Stateful Protocol Fuzzing Server (:5000)
+  # ----------------------------------------------------------------------------
   monitor_attacker:
     image: python:3.11-slim
     container_name: aegis_monitor_attacker
     working_dir: /sandbox
     volumes:
-      - .:/sandbox
+      - .:/sandbox:ro
     command: /bin/sh -c "python -u /sandbox/vulnerable_targets/mini_proto_server.py"
     networks:
       aegis_isolated_net:
@@ -36,12 +71,26 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+          pids: 50
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
+# ==============================================================================
+# Isolated Network Topology
+# ==============================================================================
 networks:
   aegis_isolated_net:
     driver: bridge
-    internal: true # STRICTLY NO EXTERNAL INTERNET ROUTING
+    internal: true # STRICT LAB ISOLATION: Zero external internet routing
     ipam:
       driver: default
       config:

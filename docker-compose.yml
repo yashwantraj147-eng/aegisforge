@@ -1,18 +1,48 @@
+# ==============================================================================
+# AegisForge Full-Stack Production & Cyber Range Compose Specification
+# ==============================================================================
 services:
+  # ----------------------------------------------------------------------------
+  # Service 1: FastAPI Telemetry & Security Engine Hub
+  # ----------------------------------------------------------------------------
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
     container_name: aegis_backend
     environment:
-      - MODE=SIMULATION
+      - MODE=${MODE:-SIMULATION}
       - ENFORCE_SAFETY_GUARD=true
+      - RATE_LIMIT_PER_MINUTE=120
+      - CORS_ORIGINS=http://localhost,http://127.0.0.1,http://localhost:80,http://127.0.0.1:80,http://localhost:5173
+    volumes:
+      - aegis_db_data:/app/backend/data
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+          pids: 100
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - aegis_internal_net
     restart: unless-stopped
 
+  # ----------------------------------------------------------------------------
+  # Service 2: React Cyber-Ops Dashboard & Nginx Reverse Proxy
+  # ----------------------------------------------------------------------------
   frontend:
     build:
       context: ./frontend
@@ -21,11 +51,32 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:80/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+          pids: 50
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - aegis_internal_net
     restart: unless-stopped
 
+  # ----------------------------------------------------------------------------
+  # Sandbox Service 1: Simulated Gateway Node
+  # ----------------------------------------------------------------------------
   sandbox_gateway:
     image: alpine:latest
     container_name: aegis_sandbox_gateway
@@ -33,8 +84,22 @@ services:
     networks:
       aegis_sandbox_net:
         ipv4_address: 192.168.100.1
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 128M
+          pids: 30
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
     restart: unless-stopped
 
+  # ----------------------------------------------------------------------------
+  # Sandbox Service 2: Simulated Victim Host
+  # ----------------------------------------------------------------------------
   sandbox_victim:
     image: alpine:latest
     container_name: aegis_sandbox_victim
@@ -42,28 +107,66 @@ services:
     networks:
       aegis_sandbox_net:
         ipv4_address: 192.168.100.105
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 128M
+          pids: 30
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
     restart: unless-stopped
 
+  # ----------------------------------------------------------------------------
+  # Sandbox Service 3: Security Monitor & Stateful Fuzzing Target (:5000)
+  # ----------------------------------------------------------------------------
   sandbox_attacker:
     image: python:3.11-slim
     container_name: aegis_sandbox_attacker
     working_dir: /sandbox
     volumes:
-      - ./sandbox:/sandbox
+      - ./sandbox:/sandbox:ro
     command: /bin/sh -c "python -u /sandbox/vulnerable_targets/mini_proto_server.py"
     networks:
       aegis_sandbox_net:
         ipv4_address: 192.168.100.200
     ports:
       - "5000:5000"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+          pids: 50
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
+# ==============================================================================
+# Volume Definitions
+# ==============================================================================
+volumes:
+  aegis_db_data:
+    name: aegis_db_data
+
+# ==============================================================================
+# Network Topologies & Boundary Isolation
+# ==============================================================================
 networks:
+  # Internal network for UI-to-API communication
   aegis_internal_net:
     driver: bridge
+
+  # STRICT LAB ISOLATION: No default gateway to public internet
   aegis_sandbox_net:
     driver: bridge
-    internal: true # STRICT LAB ISOLATION: NO EXTERNAL INTERNET ROUTING
+    internal: true
     ipam:
       driver: default
       config:

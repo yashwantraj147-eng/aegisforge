@@ -1,41 +1,37 @@
-# Build stage
+# ==============================================================================
+# AegisForge Frontend Dockerfile (Multi-Stage Production Build)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Stage 1: Build static assets with Node.js & Vite
+# ------------------------------------------------------------------------------
 FROM node:20-alpine AS build
 
 WORKDIR /app
 
+# Copy dependency manifests for caching
 COPY package*.json ./
-RUN npm install
+RUN npm install --frozen-lockfile || npm install
 
+# Copy source code and build production distribution
 COPY . .
 RUN npm run build
 
-# Production serve stage using lightweight Nginx
-FROM nginx:alpine
+# ------------------------------------------------------------------------------
+# Stage 2: Serve with Hardened Nginx
+# ------------------------------------------------------------------------------
+FROM nginx:1.27-alpine AS runtime
 
+# Copy compiled SPA bundle to Nginx document root
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Nginx reverse proxy configuration for API and WebSockets
-RUN printf 'server {\n\
-    listen 80;\n\
-    location / {\n\
-        root /usr/share/nginx/html;\n\
-        index index.html index.htm;\n\
-        try_files $uri $uri/ /index.html;\n\
-    }\n\
-    location /api/ {\n\
-        proxy_pass http://backend:8000/api/;\n\
-        proxy_set_header Host $host;\n\
-        proxy_set_header X-Real-IP $remote_addr;\n\
-    }\n\
-    location /ws/ {\n\
-        proxy_pass http://backend:8000/ws/;\n\
-        proxy_http_version 1.1;\n\
-        proxy_set_header Upgrade $http_upgrade;\n\
-        proxy_set_header Connection "upgrade";\n\
-        proxy_set_header Host $host;\n\
-    }\n\
-}\n' > /etc/nginx/conf.d/default.conf
+# Copy production Nginx reverse proxy configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
+
+# Healthcheck testing HTTP response
+HEALTHCHECK --interval=15s --timeout=5s --start-period=5s --retries=3 \
+    CMD wget -q --spider http://127.0.0.1:80/healthz || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]

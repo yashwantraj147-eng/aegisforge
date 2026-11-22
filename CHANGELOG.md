@@ -53,5 +53,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Rich terminal application supporting `demo`, `recon`, `shellcode`, `fuzz`, `triage`, `report`, `health`, and `version`.
 - **Sandbox & Testing Infrastructure**:
   - Benign test artifact generator (`sample_synthetic.elf`, `sample_synthetic.exe`, `sample_eicar_test.txt`, `sample_windows_acl.json`).
-  - 45 integration and unit tests passing in pytest with `pytest-cov` code coverage reporting.
+  - 49 integration and unit tests passing in pytest with `pytest-cov` code coverage reporting.
   - GitHub Actions CI workflow (`.github/workflows/ci.yml`).
+- **Docker & Production Readiness**:
+  - Multi-stage Docker builds for backend and frontend separating compilation from runtime footprint.
+  - Dedicated production Nginx reverse proxy configuration (`frontend/nginx.conf`) with HTTP/1.1 WebSocket upgrade streaming, SPA fallback, gzip compression, and defensive HTTP headers (`CSP`, `X-Frame-Options`, `X-Content-Type-Options`).
+  - Container security hardening with unprivileged system user `aegis` (`UID 10001`).
+  - Container health checks (`HEALTHCHECK`) and automated dependency ordering (`condition: service_healthy`).
+  - Resource consumption limits (`cpus`, `memory`, `pids`) preventing container starvation.
+  - Strictly isolated sandbox bridge subnet (`192.168.100.0/24`, `internal: true`) barring external internet transit.
+  - Automated Docker configuration validation test suite (`test_docker_compose_config.py`).
