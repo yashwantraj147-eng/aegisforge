@@ -14,7 +14,7 @@ async def test_recon_endpoints(async_client):
     # Scope check
     scope_res = await async_client.post("/api/v1/recon/scope", json={"target": "192.168.100.1"})
     assert scope_res.status_code == 200
-    assert scope_res.json()["is_in_scope"] is True
+    assert scope_res.json()["is_authorized"] is True
 
     # Port scan
     scan_res = await async_client.post("/api/v1/recon/scan", json={
@@ -134,7 +134,9 @@ async def test_fuzz_re_endpoints(async_client):
         }
     })
     assert acl_res.status_code == 200
-    assert acl_res.json()["risk_verdict"] in ["HIGH_RISK_PERMISSIVE", "CRITICAL_INSECURE_PERMISSIONS"]
+    acl_data = acl_res.json()
+    assert acl_data["high_risk_findings"] >= 1
+    assert len(acl_data["findings"]) > 0
 
 @pytest.mark.asyncio
 async def test_maltriage_endpoints(async_client, sample_eicar_hex):
@@ -164,7 +166,7 @@ async def test_scenarios_endpoints(async_client):
     # History
     hist_res = await async_client.get("/api/v1/scenarios/history")
     assert hist_res.status_code == 200
-    assert isinstance(hist_res.json(), list)
+    assert isinstance(hist_res.json()["runs"], list)
 
 @pytest.mark.asyncio
 async def test_safety_guard_wan_rejection(async_client):
