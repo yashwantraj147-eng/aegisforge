@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Server, Radio, Laptop, Shield, ShieldAlert, ShieldCheck } from 'lucide-react';
-import { NetArenaStatusResponse } from '../lib/api';
+import { NetArenaStatus } from '../lib/api';
 
 interface TopologyGraphProps {
-  status: NetArenaStatusResponse | null;
+  status: NetArenaStatus | null;
   onToggleMitm: () => void;
   onToggleDefense: () => void;
   isEngaging: boolean;
