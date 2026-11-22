@@ -59,6 +59,7 @@ class NetArenaEngine:
             "Baseline ARP mappings cached for 192.168.100.0/24 subnet."
         ]
 
+        self._lock = asyncio.Lock()
         # In-memory ARP Table for Victim
         self.victim_arp_table: Dict[str, ARPEntry] = {}
         self._reset_arp_table()
@@ -94,10 +95,11 @@ class NetArenaEngine:
         )
 
     async def toggle_mitm(self, req: ToggleMITMRequest) -> NetArenaStatusResponse:
-        self.mitm_active = req.enable
-        now = datetime.now(timezone.utc).isoformat()
+        async with self._lock:
+            self.mitm_active = req.enable
+            now = datetime.now(timezone.utc).isoformat()
 
-        if self.mitm_active:
+            if self.mitm_active:
             # Check if Active Defense intercepts it
             if self.active_defense_enabled:
                 # Active Defense is engaged: Victim is NOT compromised!
@@ -174,11 +176,12 @@ class NetArenaEngine:
         return self.get_status()
 
     async def toggle_defense(self, req: ToggleActiveDefenseRequest) -> NetArenaStatusResponse:
-        self.active_defense_enabled = req.enable
-        self.static_pinning_enabled = req.enable_static_pinning
-        self.gratuitous_counter_enabled = req.enable_gratuitous_arp_counter
+        async with self._lock:
+            self.active_defense_enabled = req.enable
+            self.static_pinning_enabled = req.enable_static_pinning
+            self.gratuitous_counter_enabled = req.enable_gratuitous_arp_counter
 
-        state_str = "ENABLED" if self.active_defense_enabled else "DISABLED"
+            state_str = "ENABLED" if self.active_defense_enabled else "DISABLED"
         msg = f"[CONFIG] Active Defense Daemon {state_str}. DAI Rules: {self.active_defense_enabled}, Pinning: {self.static_pinning_enabled}"
         self.defensive_actions.append(msg)
 

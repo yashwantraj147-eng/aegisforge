@@ -183,6 +183,29 @@ class SafetyGuard:
             raise ValueError(f"Port range ({start_port}-{end_port}) must be between 1 and 65535.")
         if start_port > end_port:
             raise ValueError(f"Start port ({start_port}) cannot be greater than end port ({end_port}).")
+
+    def validate_payload_size(
+        self,
+        payload_data: Union[str, bytes],
+        max_bytes: int = 1048576,
+        field_name: str = "payload"
+    ) -> bool:
+        """
+        Enforces upper size limit on payloads to prevent memory exhaustion / DoS.
+        Hex string inputs are evaluated based on decoded byte length (len // 2).
+        """
+        if isinstance(payload_data, str):
+            clean_hex = payload_data.replace(" ", "").replace("\\x", "").replace("0x", "")
+            sz = len(clean_hex) // 2
+        else:
+            sz = len(payload_data)
+
+        if sz > max_bytes:
+            raise SafetyViolationException(
+                f"SAFETY VIOLATION: Payload size ({sz} bytes) exceeds maximum sandbox limit of {max_bytes} bytes.",
+                target=f"{field_name}:{sz}B"
+            )
+        return True
         return True
 
 safety_guard = SafetyGuard()

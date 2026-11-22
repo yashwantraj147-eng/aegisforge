@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from backend.app.core.config import settings
 from backend.app.core.ws_manager import ws_manager
 from backend.app.core.safety_guard import SafetyViolationException
+from backend.app.core.rate_limiter import RateLimitMiddleware
 from backend.app.core.logger import get_logger
 from backend.app.models.schemas import HealthResponse
 
@@ -47,13 +48,19 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS Middleware (permits local Vite development server)
+# CORS Middleware (scoped to local development and sandbox origins)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+)
+
+# Rate Limiter Middleware
+app.add_middleware(
+    RateLimitMiddleware,
+    max_requests_per_minute=settings.RATE_LIMIT_PER_MINUTE
 )
 
 # Global Safety Guard Exception Handler

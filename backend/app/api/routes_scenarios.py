@@ -20,6 +20,7 @@ from backend.app.models.schemas import (
 router = APIRouter(prefix="/scenarios", tags=["Purple-Team Orchestrator"])
 
 scenario_history: List[Dict[str, Any]] = []
+_history_lock = asyncio.Lock()
 
 @router.post("/run-purple-team", response_model=ScenarioRunResponse)
 async def run_purple_team_exercise():

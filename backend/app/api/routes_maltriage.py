@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from backend.app.core.config import settings
 from backend.app.core.ws_manager import ws_manager
+from backend.app.core.safety_guard import safety_guard
 from backend.app.engines.mal_triage import malware_triage_engine
 from backend.app.models.schemas import TriageArtifactRequest, MalwareTriageResponse
 
@@ -10,6 +11,8 @@ router = APIRouter(prefix="/maltriage", tags=["Module 5: Malware & Benign Artifa
 async def analyze_artifact(req: TriageArtifactRequest):
     """Triages a safe test artifact: Shannon entropy, printable strings, regex IOCs, YARA, and MITRE ATT&CK."""
     try:
+        if req.content_raw_hex:
+            safety_guard.validate_payload_size(req.content_raw_hex, max_bytes=settings.MAX_PAYLOAD_BYTES, field_name="content_raw_hex")
         res = malware_triage_engine.triage_artifact(req)
         severity = "CRITICAL" if res.risk_score >= 8.0 else ("HIGH" if res.risk_score >= 6.0 else "INFO")
         await ws_manager.broadcast_event(

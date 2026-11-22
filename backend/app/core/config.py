@@ -23,6 +23,19 @@ class Settings(BaseSettings):
     
     # Safety guardrails
     ENFORCE_SAFETY_GUARD: bool = True
+    MAX_PAYLOAD_BYTES: int = 1048576  # 1 MB max for hex payloads
+    RATE_LIMIT_PER_MINUTE: int = 120
+
+    # CORS allowlist (restricted to localhost development ports)
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ]
+
     ALLOWED_NETWORKS: list[str] = [
         "127.0.0.0/8",      # Loopback
         "10.0.0.0/8",       # RFC 1918 Class A

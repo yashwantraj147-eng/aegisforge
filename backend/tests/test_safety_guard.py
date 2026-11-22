@@ -90,3 +90,14 @@ def test_blocked_suffix_spoofing(guard):
         assert guard.is_hostname_allowed(s) is False
         with pytest.raises(SafetyViolationException):
             guard.validate_target(s)
+
+def test_payload_size_validation(guard):
+    # Normal payload within 1024 bytes
+    normal_payload = "90" * 100
+    assert guard.validate_payload_size(normal_payload, max_bytes=1024) is True
+
+    # Oversized payload rejected
+    oversized_payload = "41" * 3000
+    with pytest.raises(SafetyViolationException) as exc_info:
+        guard.validate_payload_size(oversized_payload, max_bytes=1024)
+    assert "exceeds maximum sandbox limit" in str(exc_info.value.message)
