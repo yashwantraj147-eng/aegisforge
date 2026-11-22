@@ -128,9 +128,14 @@ async def test_fuzz_re_endpoints(async_client):
     # ACL Audit
     acl_res = await async_client.post("/api/v1/fuzz/acl-audit", json={
         "policy_json": {
-            "Path": "C:\\Test",
-            "Owner": "SYSTEM",
-            "Access": [{"Identity": "Everyone", "Rights": "FullControl", "Type": "Allow"}]
+            "rules": [
+                {
+                    "path": "C:\\Windows\\System32\\mock_service.exe",
+                    "principal": "Everyone",
+                    "permission": "FullControl",
+                    "type": "Allow"
+                }
+            ]
         }
     })
     assert acl_res.status_code == 200
