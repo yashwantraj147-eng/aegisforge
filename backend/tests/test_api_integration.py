@@ -11,6 +11,11 @@ async def test_health_endpoint(async_client):
 
 @pytest.mark.asyncio
 async def test_recon_endpoints(async_client):
+    # Scope check
+    scope_res = await async_client.post("/api/v1/recon/scope", json={"target": "192.168.100.1"})
+    assert scope_res.status_code == 200
+    assert scope_res.json()["is_in_scope"] is True
+
     # Port scan
     scan_res = await async_client.post("/api/v1/recon/scan", json={
         "target": "127.0.0.1",
@@ -29,27 +34,27 @@ async def test_recon_endpoints(async_client):
         "privileges_required": "NONE",
         "user_interaction": "NONE",
         "scope": "UNCHANGED",
-        "confidentiality_impact": "HIGH",
-        "integrity_impact": "HIGH",
-        "availability_impact": "HIGH"
+        "confidentiality": "HIGH",
+        "integrity": "HIGH",
+        "availability": "HIGH"
     })
     assert cvss_res.status_code == 200
     cvss_data = cvss_res.json()
     assert cvss_data["base_score"] == 9.8
-    assert cvss_data["severity"] == "CRITICAL"
+    assert cvss_data["severity_rating"] == "CRITICAL"
 
     # CVD Report
-    report_res = await async_client.post("/api/v1/recon/cvd-report", json={
-        "title": "Stack Overflow in MiniProto Parser",
-        "vulnerability_type": "CWE-121: Stack-based Buffer Overflow",
-        "cvss_score": 9.8,
-        "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
-        "target_component": "MiniProto Service v1.0",
-        "remediation_guidance": "Implement length checks and stack canaries."
+    report_res = await async_client.post("/api/v1/recon/report", json={
+        "vulnerability_title": "Stack Overflow in MiniProto Parser",
+        "affected_component": "MiniProto Service v1.0",
+        "summary": "Buffer overflow identified via stateful fuzzer.",
+        "technical_description": "Sending >1024 bytes overwrites stack frame.",
+        "reproduction_steps": ["1. Connect to port 5000", "2. Send payload"],
+        "remediation_recommendations": ["Enable stack canaries", "Validate lengths"]
     })
     assert report_res.status_code == 200
     report_data = report_res.json()
-    assert "markdown_report" in report_data
+    assert "markdown_content" in report_data
 
 @pytest.mark.asyncio
 async def test_netarena_endpoints(async_client):
@@ -74,10 +79,11 @@ async def test_netarena_endpoints(async_client):
     assert defense_res.json()["active_defense_enabled"] is True
 
     # Packets
-    packets_res = await async_client.get("/api/v1/netarena/packets?limit=5")
+    packets_res = await async_client.get("/api/v1/netarena/packets?count=5")
     assert packets_res.status_code == 200
     packets_data = packets_res.json()
-    assert "packets" in packets_data
+    assert isinstance(packets_data, list)
+    assert len(packets_data) > 0
 
 @pytest.mark.asyncio
 async def test_exploit_studio_endpoints(async_client, sample_nop_sled_hex):
@@ -112,16 +118,20 @@ async def test_fuzz_re_endpoints(async_client):
     # Protocol Fuzzing
     fuzz_res = await async_client.post("/api/v1/fuzz/protocol", json={
         "target_host": "127.0.0.1",
-        "target_port": 9999,
-        "iteration_count": 10,
+        "target_port": 5000,
+        "max_cases": 10,
         "mutation_strategies": ["OVERSIZE_BUFFER", "FORMAT_STRING"]
     })
     assert fuzz_res.status_code == 200
-    assert fuzz_res.json()["iterations_completed"] == 10
+    assert fuzz_res.json()["total_cases_run"] == 10
 
     # ACL Audit
     acl_res = await async_client.post("/api/v1/fuzz/acl-audit", json={
-        "raw_json_policy": "{\"Path\": \"C:\\\\Test\", \"Owner\": \"SYSTEM\", \"Access\": [{\"Identity\": \"Everyone\", \"Rights\": \"FullControl\", \"Type\": \"Allow\"}]}"
+        "policy_json": {
+            "Path": "C:\\Test",
+            "Owner": "SYSTEM",
+            "Access": [{"Identity": "Everyone", "Rights": "FullControl", "Type": "Allow"}]
+        }
     })
     assert acl_res.status_code == 200
     assert acl_res.json()["risk_verdict"] in ["HIGH_RISK_PERMISSIVE", "CRITICAL_INSECURE_PERMISSIONS"]
@@ -148,8 +158,8 @@ async def test_scenarios_endpoints(async_client):
     scen_res = await async_client.post("/api/v1/scenarios/run-purple-team")
     assert scen_res.status_code == 200
     data = scen_res.json()
-    assert len(data["steps_executed"]) == 6
-    assert data["final_verdict"] == "KILL_CHAIN_SUCCESSFULLY_NEUTRALIZED"
+    assert len(data["steps"]) == 6
+    assert data["status"] == "COMPLETED"
 
     # History
     hist_res = await async_client.get("/api/v1/scenarios/history")
@@ -166,4 +176,4 @@ async def test_safety_guard_wan_rejection(async_client):
     })
     assert res.status_code == 400
     err = res.json()
-    assert err["error"] == "SAFETY_GUARD_VIOLATION"
+    assert "SAFETY VIOLATION" in err["detail"]
