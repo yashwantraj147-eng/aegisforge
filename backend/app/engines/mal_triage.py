@@ -10,11 +10,11 @@ from backend.app.core.config import settings
 from backend.app.core.utils import calculate_shannon_entropy
 from backend.app.core.logger import get_logger
 from backend.app.models.schemas import (
-
-logger = get_logger("mal_triage")
     TriageArtifactRequest, MalwareTriageResponse,
     EntropyBlock, YARAMatch, ATTACKTechnique
 )
+
+logger = get_logger("mal_triage")
 
 class MalwareTriageEngine:
     """

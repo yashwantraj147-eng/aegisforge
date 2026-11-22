@@ -11,12 +11,12 @@ from backend.app.core.safety_guard import safety_guard
 from backend.app.core.utils import calculate_shannon_entropy
 from backend.app.core.logger import get_logger
 from backend.app.models.schemas import (
-
-logger = get_logger("fuzz_re")
     ProtocolFuzzRequest, ProtocolFuzzResponse, FuzzTestCase, FuzzCrashReport,
     ACLAuditRequest, ACLAuditResponse, ACLFinding,
     BinaryAuditRequest, BinaryAuditResponse, BinarySectionInfo, BinaryMitigations
 )
+
+logger = get_logger("fuzz_re")
 
 class StatefulProtocolFuzzer:
     """
