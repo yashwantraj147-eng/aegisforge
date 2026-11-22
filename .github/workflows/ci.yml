@@ -24,7 +24,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install ./backend
-          pip install pytest pytest-asyncio ruff
+          pip install pytest pytest-asyncio pytest-cov ruff
 
       - name: Run Ruff Linter
         run: |
@@ -34,9 +34,9 @@ jobs:
         run: |
           python sandbox/sample_artifacts/generate_benign_samples.py
 
-      - name: Run Pytest Test Suite
+      - name: Run Pytest Test Suite with Coverage
         run: |
-          pytest backend/tests -v
+          pytest backend/tests -v --cov=backend/app --cov-report=term-missing
 
       - name: Verify CLI Companion Tooling
         run: |
